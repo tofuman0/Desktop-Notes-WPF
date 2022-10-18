@@ -182,21 +182,29 @@ namespace Desktop_Notes_WPF
 
 		private void GenerateDefaultConfig(string path)
         {
-			var defaultConfig = new JsonConfig
+			if (File.Exists(Convert.ToString(AppDomain.CurrentDomain.BaseDirectory) + "\\default-desktop-notes.json") == true)
 			{
-				Font = "Arial",
-				FontSize = "12.0",
-				FontStyle = "Standard",
-				FontColour = "E0FFFFFF",
-				TextAlign = "Left",
-				LocationX = 150,
-				LocationY = 150,
-				Width = 300,
-				Height = 200,
-				Note = "Desktop Notes"
-			};
+				var defaultConfig = ReadConfig(Convert.ToString(AppDomain.CurrentDomain.BaseDirectory) + "\\default-desktop-notes.json");
+				WriteConfig(defaultConfig, path);
+			}
+			else
+			{
+				var defaultConfig = new JsonConfig
+				{
+					Font = "Arial",
+					FontSize = "12.0",
+					FontStyle = "Standard",
+					FontColour = "E0FFFFFF",
+					TextAlign = "Left",
+					LocationX = 150,
+					LocationY = 150,
+					Width = 300,
+					Height = 200,
+					Note = "Desktop Notes"
+				};
 
-			WriteConfig(defaultConfig, path);
+				WriteConfig(defaultConfig, path);
+			}
 		}
 	}
 }
