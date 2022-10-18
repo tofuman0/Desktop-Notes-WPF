@@ -58,6 +58,7 @@ namespace Desktop_Notes_WPF
 			ContextMenu.Items.Add(itemExit);
 
 			taskbarIcon.ContextMenu = ContextMenu;
+			taskbarIcon.TrayMouseDoubleClick += Settings_Click;
 
 			CheckConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
 			config = ReadConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
@@ -73,6 +74,7 @@ namespace Desktop_Notes_WPF
 				{
 					settingsOpen = true;
 					Settings settings = new Settings(config);
+					settings.Topmost = true;
 					if (settings.ShowDialog() == true)
 					{
 						config = settings.config;
