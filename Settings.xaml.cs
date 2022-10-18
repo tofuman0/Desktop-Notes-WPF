@@ -51,7 +51,7 @@ namespace Desktop_Notes_WPF
             try
             {
                 config.Note = DesktopNote.Text;
-                config.LocationX = Math.Max(0, Convert.ToUInt32(tbX.Text));
+                config.LocationX = Convert.ToInt32(tbX.Text);
                 config.LocationY = Math.Max(0, Convert.ToUInt32(tbY.Text));
                 config.TextAlign = cbAlignment.Text;
                 config.Width = Math.Max(0, Convert.ToUInt32(tbWidth.Text));

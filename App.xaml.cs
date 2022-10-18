@@ -26,7 +26,7 @@ namespace Desktop_Notes_WPF
 			public string? FontStyle { get; set; }
 			public string? FontColour { get; set; }
 			public string? TextAlign { get; set; }
-			public UInt32? LocationX { get; set; }
+			public Int32? LocationX { get; set; }
 			public UInt32? LocationY { get; set; }
 			public double? Width { get; set; }
 			public double? Height { get; set; }

@@ -16,6 +16,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Forms;
 
 namespace Desktop_Notes_WPF
 {
@@ -119,7 +120,18 @@ namespace Desktop_Notes_WPF
 
             if (config.LocationX.HasValue)
             {
-                this.Left = Convert.ToDouble(config.LocationX);
+                if(config.LocationX < 0)
+                {
+                    // If a negative number is used place from the right edge of the screen
+                    Int32 width = 0;
+                    foreach(Screen curScreen in Screen.AllScreens)
+                    {
+                        width += curScreen.Bounds.Width;
+                    }
+                    this.Left = Convert.ToDouble(width + config.LocationX);
+                }
+                else
+                    this.Left = Convert.ToDouble(config.LocationX);
             }
 
             if (config.LocationY.HasValue)
