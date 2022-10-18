@@ -59,8 +59,8 @@ namespace Desktop_Notes_WPF
 
 			taskbarIcon.ContextMenu = ContextMenu;
 
-			CheckConfig(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Desktop-Notes.json");
-			config = ReadConfig(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Desktop-Notes.json");
+			CheckConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
+			config = ReadConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
 			dtNote.Config(config);
 			dtNote.Show();
 		}
@@ -77,7 +77,7 @@ namespace Desktop_Notes_WPF
 					{
 						config = settings.config;
 						dtNote.Config(config);
-						WriteConfig(config, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Desktop-Notes.json");
+						WriteConfig(config, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
 					}
 					settingsOpen = false;
 				}
