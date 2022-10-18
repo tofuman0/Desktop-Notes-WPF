@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>Desktop_Notes_WPF</RootNamespace>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Icons\Desktop Notes.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
