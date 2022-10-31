@@ -80,7 +80,7 @@ namespace Desktop_Notes_WPF
                 if (config.Note.Contains("{{ref="))
                 {
                     Int32 offset = 0;
-                    while (config.Note.IndexOf("{{ref=", offset) > 0)
+                    while (config.Note.IndexOf("{{ref=", offset) >= 0)
                     {
                         Note += config.Note[offset..config.Note.IndexOf("{{ref=", offset)];
                         int find = config.Note.IndexOf("{{ref=", offset) + 6;
