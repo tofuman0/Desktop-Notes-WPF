@@ -128,14 +128,21 @@ namespace Desktop_Notes_WPF
 
                 string[] styles = config.FontStyle.ToLower().Split(" ");
                 Style TextStyle = new Style();
-                if (styles.Contains("standard")) { }
-                if (styles.Contains("bold"))
+                if (styles.Contains("standard"))
+                {
+                    Note_Text.FontWeight = FontWeights.Normal;
+                }
+                else if (styles.Contains("bold"))
                 {
                     Note_Text.FontWeight = FontWeights.Bold;
                 }
                 if (styles.Contains("italic"))
                 {
                     Note_Text.FontStyle = FontStyles.Italic;
+                }
+                else
+                {
+                    Note_Text.FontStyle = FontStyles.Normal;
                 }
                 if (styles.Contains("underlined"))
                 {
