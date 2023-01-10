@@ -31,24 +31,33 @@ namespace Desktop_Notes_WPF
 			public double? Width { get; set; }
 			public double? Height { get; set; }
 			public string? Note { get; set; }
+			public bool? AutoRefresh { get; set; }
+			public UInt32? RefreshTime { get; set; }
 #nullable disable
 		}
 
 		private JsonConfig config = null;
 		private bool settingsOpen = false;
+		private bool autoRefresh = false;
 		private static readonly DesktopNote dtNote = new DesktopNote();
+		private ContextMenu ContextMenu = new ContextMenu();
 
 		private void Application_Startup(object sender, StartupEventArgs e)
 		{
 			TaskbarIcon taskbarIcon = new TaskbarIcon();
 			taskbarIcon.Icon = System.Drawing.Icon.FromHandle(Desktop_Notes_WPF.Properties.Resources.Desktop_Notes.Handle);
 			taskbarIcon.ToolTipText = "Desktop Notes";
-			ContextMenu ContextMenu = new ContextMenu();
-
+			
 			MenuItem itemSettings = new MenuItem();
 			itemSettings.Header = "Settings";
 			itemSettings.Click += Settings_Click;
 			ContextMenu.Items.Add(itemSettings);
+
+			MenuItem itemRefresh = new MenuItem();
+			itemRefresh.Header = "Auto refresh";
+			itemRefresh.IsCheckable = true;
+			itemRefresh.Click += AutoRefresh_Click;
+			ContextMenu.Items.Add(itemRefresh);
 
 			ContextMenu.Items.Add(new Separator());
 
@@ -62,7 +71,10 @@ namespace Desktop_Notes_WPF
 
 			CheckConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
 			config = ReadConfig(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
-			dtNote.Config(config);
+
+			((MenuItem)ContextMenu.Items[1]).IsChecked = Convert.ToBoolean(config.AutoRefresh);
+
+			dtNote.Config(config, true);
 			dtNote.Show();
 		}
 
@@ -88,6 +100,14 @@ namespace Desktop_Notes_WPF
             {
 				MessageBox.Show(ex.Message);
             }
+		}
+
+		private void AutoRefresh_Click(object sender, System.EventArgs e)
+        {
+			autoRefresh = ((MenuItem)ContextMenu.Items[1]).IsChecked;
+			config.AutoRefresh = autoRefresh;
+			dtNote.Config(config, true);
+			WriteConfig(config, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
 		}
 		private void Exit_Click(object sender, System.EventArgs e)
         {
@@ -150,6 +170,16 @@ namespace Desktop_Notes_WPF
 					jsonConfig.Note = "Desktop Notes";
 					writeConfig = true;
 				}
+				if (jsonConfig.AutoRefresh == null)
+                {
+					jsonConfig.AutoRefresh = false;
+					writeConfig = true;
+                }
+				if (jsonConfig.RefreshTime == null)
+				{
+					jsonConfig.RefreshTime = 60;
+					writeConfig = true;
+				}
 
 				if (writeConfig == true)
 					WriteConfig(jsonConfig, path);
@@ -202,7 +232,9 @@ namespace Desktop_Notes_WPF
 					LocationY = 150,
 					Width = 300,
 					Height = 200,
-					Note = "Desktop Notes"
+					Note = "Desktop Notes",
+					AutoRefresh = false,
+					RefreshTime = 60
 				};
 
 				WriteConfig(defaultConfig, path);

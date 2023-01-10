@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -44,6 +45,10 @@ namespace Desktop_Notes_WPF
 
         static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
 
+        private bool autoRefresh = false;
+        private UInt32 autoRefreshTime = 60;
+        private App.JsonConfig storedConfig = null;
+
         public DesktopNote()
         {
             InitializeComponent();
@@ -73,132 +78,177 @@ namespace Desktop_Notes_WPF
             SendWpfWindowBack(this);
         }
 
-        public void Config(App.JsonConfig config)
+        public void Config(App.JsonConfig config, bool firstRun = false)
         {
             try
             {
-                string Note = "";
-                if (config.Note.Contains("{{ref="))
+                this.Dispatcher.Invoke(() =>
                 {
-                    Int32 offset = 0;
-                    while (config.Note.IndexOf("{{ref=", offset) >= 0)
+                    storedConfig = config;
+                    string Note = "";
+                    if (config.Note.Contains("{{ref="))
                     {
-                        Note += config.Note[offset..config.Note.IndexOf("{{ref=", offset)];
-                        int find = config.Note.IndexOf("{{ref=", offset) + 6;
-                        int length = config.Note.IndexOf("}}", offset) - find;
-
-                        if (find > 0 && length > 0)
+                        Int32 offset = 0;
+                        while (config.Note.IndexOf("{{ref=", offset) >= 0)
                         {
-                            // Add filename length and "{{ref=" and "}}" lengths to offset.
-                            offset = find + length + 2;
+                            Note += config.Note[offset..config.Note.IndexOf("{{ref=", offset)];
+                            int find = config.Note.IndexOf("{{ref=", offset) + 6;
+                            int length = config.Note.IndexOf("}}", offset) - find;
 
-                            string refPath = config.Note.Substring(find, length);
-
-                            if(refPath.Substring(0, 4) == "http")
+                            if (find > 0 && length > 0)
                             {
-                                try
+                                // Add filename length and "{{ref=" and "}}" lengths to offset.
+                                offset = find + length + 2;
+
+                                string refPath = config.Note.Substring(find, length);
+
+                                if (refPath.Substring(0, 4) == "http")
                                 {
-                                    var wc = new WebClient();
-                                    string webContent = wc.DownloadString(refPath);
-                                    Note += webContent;
+                                    try
+                                    {
+                                        var wc = new WebClient();
+                                        string webContent = wc.DownloadString(refPath);
+                                        Note += webContent;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Note += "Failed to load data from " + refPath;
+                                    }
                                 }
-                                catch (Exception)
+                                else if (File.Exists(refPath))
                                 {
-                                    Note += "Failed to load data from " + refPath;
+                                    Note += File.ReadAllText(refPath);
                                 }
                             }
-                            else if (File.Exists(refPath))
-                            {
-                                Note += File.ReadAllText(refPath);
-                            }
                         }
-                    }
-                    if (offset < config.Note.Length)
-                    {
-                        Note += config.Note[offset..];
-                    }
-                }
-                else
-                {
-                    Note = config.Note;
-                }
-
-                Note_Text.Text = Note;
-                Note_Text.FontFamily = new FontFamily(config.Font);
-                Note_Text.FontSize = Convert.ToDouble(config.FontSize);
-                Int32 colour = Convert.ToInt32(config.FontColour, 16);
-                Color argb = Color.FromArgb(
-                    Convert.ToByte((colour >> 24) & 0xFF),
-                    Convert.ToByte((colour >> 16) & 0xFF),
-                    Convert.ToByte((colour >> 8) & 0xFF),
-                    Convert.ToByte((colour) & 0xFF)
-                );
-                Note_Text.Foreground = new SolidColorBrush(argb);
-                if (config.TextAlign.ToLower() == "left")
-                    Note_Text.TextAlignment = TextAlignment.Left;
-                else if (config.TextAlign.ToLower() == "center")
-                    Note_Text.TextAlignment = TextAlignment.Center;
-                else if (config.TextAlign.ToLower() == "right")
-                    Note_Text.TextAlignment = TextAlignment.Right;
-
-                string[] styles = config.FontStyle.ToLower().Split(" ");
-                Style TextStyle = new Style();
-                if (styles.Contains("standard"))
-                {
-                    Note_Text.FontWeight = FontWeights.Normal;
-                }
-                else if (styles.Contains("bold"))
-                {
-                    Note_Text.FontWeight = FontWeights.Bold;
-                }
-                if (styles.Contains("italic"))
-                {
-                    Note_Text.FontStyle = FontStyles.Italic;
-                }
-                else
-                {
-                    Note_Text.FontStyle = FontStyles.Normal;
-                }
-                if (styles.Contains("underlined"))
-                {
-                    Note_Text.TextDecorations.Add(TextDecorations.Underline);
-                }
-
-                if (config.Width.HasValue)
-                {
-                    this.Width = (double)config.Width;
-                    Note_Text.Width = this.Width;
-                }
-                if (config.Height.HasValue)
-                {
-                    this.Height = (double)config.Height;
-                    Note_Text.Height = this.Height;
-                }
-
-                if (config.LocationX.HasValue)
-                {
-                    if (config.LocationX < 0)
-                    {
-                        // If a negative number is used place from the right edge of the screen
-                        Int32 width = 0;
-                        foreach (Screen curScreen in Screen.AllScreens)
+                        if (offset < config.Note.Length)
                         {
-                            width += curScreen.Bounds.Width;
+                            Note += config.Note[offset..];
                         }
-                        this.Left = Convert.ToDouble(width + config.LocationX);
                     }
                     else
-                        this.Left = Convert.ToDouble(config.LocationX);
-                }
+                    {
+                        Note = config.Note;
+                    }
 
-                if (config.LocationY.HasValue)
+                    Note_Text.Text = Note;
+                    Note_Text.FontFamily = new FontFamily(config.Font);
+                    Note_Text.FontSize = Convert.ToDouble(config.FontSize);
+                    Int32 colour = Convert.ToInt32(config.FontColour, 16);
+                    Color argb = Color.FromArgb(
+                        Convert.ToByte((colour >> 24) & 0xFF),
+                        Convert.ToByte((colour >> 16) & 0xFF),
+                        Convert.ToByte((colour >> 8) & 0xFF),
+                        Convert.ToByte((colour) & 0xFF)
+                    );
+                    Note_Text.Foreground = new SolidColorBrush(argb);
+                    if (config.TextAlign.ToLower() == "left")
+                        Note_Text.TextAlignment = TextAlignment.Left;
+                    else if (config.TextAlign.ToLower() == "center")
+                        Note_Text.TextAlignment = TextAlignment.Center;
+                    else if (config.TextAlign.ToLower() == "right")
+                        Note_Text.TextAlignment = TextAlignment.Right;
+
+                    string[] styles = config.FontStyle.ToLower().Split(" ");
+                    Style TextStyle = new Style();
+                    if (styles.Contains("standard"))
+                    {
+                        Note_Text.FontWeight = FontWeights.Normal;
+                    }
+                    else if (styles.Contains("bold"))
+                    {
+                        Note_Text.FontWeight = FontWeights.Bold;
+                    }
+                    if (styles.Contains("italic"))
+                    {
+                        Note_Text.FontStyle = FontStyles.Italic;
+                    }
+                    else
+                    {
+                        Note_Text.FontStyle = FontStyles.Normal;
+                    }
+                    if (styles.Contains("underlined"))
+                    {
+                        Note_Text.TextDecorations.Add(TextDecorations.Underline);
+                    }
+
+                    if (config.Width.HasValue)
+                    {
+                        this.Width = (double)config.Width;
+                        Note_Text.Width = this.Width;
+                    }
+                    if (config.Height.HasValue)
+                    {
+                        this.Height = (double)config.Height;
+                        Note_Text.Height = this.Height;
+                    }
+
+                    if (config.LocationX.HasValue)
+                    {
+                        if (config.LocationX < 0)
+                        {
+                            // If a negative number is used place from the right edge of the screen
+                            Int32 width = 0;
+                            foreach (Screen curScreen in Screen.AllScreens)
+                            {
+                                width += curScreen.Bounds.Width;
+                            }
+                            this.Left = Convert.ToDouble(width + config.LocationX);
+                        }
+                        else
+                            this.Left = Convert.ToDouble(config.LocationX);
+                    }
+
+                    if (config.LocationY.HasValue)
+                    {
+                        this.Top = Convert.ToDouble(config.LocationY);
+                    }
+
+                    if (config.AutoRefresh.HasValue)
+                    {
+                        autoRefresh = Convert.ToBoolean(config.AutoRefresh);
+                    }
+
+                    if (config.RefreshTime.HasValue)
+                    {
+                        autoRefreshTime = Convert.ToUInt32(config.RefreshTime);
+                    }
+                });
+
+                if (firstRun == true && autoRefresh == true)
                 {
-                    this.Top = Convert.ToDouble(config.LocationY);
+                    firstRun = true;
+                    Thread t = new Thread(new ThreadStart(RefreshThreadProc));
+                    t.Start();
                 }
             }
             catch(Exception ex)
             {
-                System.Windows.MessageBox.Show("Error Loading Settings", ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.Message, "Error Loading Settings", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public void RefreshThreadProc()
+        {
+            if(autoRefresh == false)
+            {
+                return;
+            }
+            RefreshConfig();
+            Thread.Sleep(Convert.ToInt32(autoRefreshTime * 1000));
+            if (autoRefresh == false)
+            {
+                return;
+            }
+            Thread t = new Thread(new ThreadStart(RefreshThreadProc));
+            t.Start();
+        }
+
+        public void RefreshConfig()
+        {
+            if (storedConfig != null)
+            {
+                Config(storedConfig);
             }
         }
     }
