@@ -9,5 +9,5 @@ You are able to reference external files by entering \{\{ref=PATH_TO_FILE\}\} in
 
 > \{\{ref=c:\\folder\\file.txt\}\}
 
-> \{\{ref=http://url.tld/feed.php\}\}
+> \{\{ref=http://url.tld/feed.php \}\}
 
