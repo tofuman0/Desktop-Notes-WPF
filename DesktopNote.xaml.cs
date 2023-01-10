@@ -18,6 +18,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using System.IO;
+using System.Net;
 
 namespace Desktop_Notes_WPF
 {
@@ -92,7 +93,21 @@ namespace Desktop_Notes_WPF
                             offset = find + length + 2;
 
                             string refPath = config.Note.Substring(find, length);
-                            if (File.Exists(refPath))
+
+                            if(refPath.Substring(0, 4) == "http")
+                            {
+                                try
+                                {
+                                    var wc = new WebClient();
+                                    string webContent = wc.DownloadString(refPath);
+                                    Note += webContent;
+                                }
+                                catch (Exception)
+                                {
+                                    Note += "Failed to load data from " + refPath;
+                                }
+                            }
+                            else if (File.Exists(refPath))
                             {
                                 Note += File.ReadAllText(refPath);
                             }
