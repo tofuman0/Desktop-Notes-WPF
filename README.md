@@ -6,5 +6,8 @@ Utility that draws text on a window that is sent to back. Useful for placing per
 
 You are able to reference external files by entering \{\{ref=PATH_TO_FILE\}\} into the desktop note text. For example:
 > \{\{ref=\\\\server\\folder\\file.txt\}\}
+
 > \{\{ref=c:\\folder\\file.txt\}\}
+
 > \{\{ref=http://url.tld/feed.php\}\}
+
