@@ -144,7 +144,7 @@ namespace Desktop_Notes_WPF
                                         }
                                         else if (attribute == "ram" || attribute == "memory")
                                         {
-                                            var ram = GetWindowsMetrics();
+                                            var ram = GetWindowsRamMetrics();
                                             if (ram.Total >= 1048576)
                                             {
                                                 systemstring = Math.Round(ram.Total / 1024 /1024, 2) + "TB";
@@ -157,6 +157,26 @@ namespace Desktop_Notes_WPF
                                             {
                                                 systemstring = (ram.Total) + "MB";
                                             }
+                                        }
+                                        else if (attribute == "harddisks" || attribute == "hdd")
+                                        {
+                                            var hdds = GetWindowsDiskMetrics();
+                                            foreach(var hdd in hdds)
+                                            {
+                                                if (hdd.Size >= 1048576)
+                                                {
+                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
+                                                }
+                                                else if (hdd.Size >= 1024)
+                                                {
+                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                }
+                                                else
+                                                {
+                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
+                                                }
+                                            }
+                                            systemstring = systemstring.Trim('\n');
                                         }
                                         else if (attribute == "name" || attribute == "computername")
                                         {
@@ -311,7 +331,14 @@ namespace Desktop_Notes_WPF
             public double Free;
         }
 
-        private MemoryMetrics GetWindowsMetrics()
+        public class DiskMetrics
+        {
+            public string DeviceID;
+            public string Decription;
+            public double Size;
+        }
+
+        private MemoryMetrics GetWindowsRamMetrics()
         {
             var output = "";
 
@@ -326,7 +353,7 @@ namespace Desktop_Notes_WPF
                 output = process.StandardOutput.ReadToEnd();
             }
 
-            var lines = output.Trim().Split("\n");
+            var lines = output.Trim().Replace("\r", "").Split("\n");
             var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
             var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
 
@@ -335,6 +362,55 @@ namespace Desktop_Notes_WPF
             metrics.Free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
             metrics.Used = metrics.Total - metrics.Free;
 
+            return metrics;
+        }
+
+        private List<DiskMetrics> GetWindowsDiskMetrics()
+        {
+            var output = "";
+
+            var info = new System.Diagnostics.ProcessStartInfo();
+            info.FileName = "wmic";
+            info.Arguments = "logicaldisk Get Description,DeviceID,Size /Value";
+            info.RedirectStandardOutput = true;
+            info.CreateNoWindow = true;
+
+            using (var process = System.Diagnostics.Process.Start(info))
+            {
+                output = process.StandardOutput.ReadToEnd();
+            }
+
+            var metrics = new List<DiskMetrics>();
+            var disk = new DiskMetrics();
+            var lines = output.Trim().Replace("\r", "").Split("\n");
+            foreach(var line in lines)
+            {
+                var working = line.Split("=", StringSplitOptions.RemoveEmptyEntries);
+                if (working.Count() == 0)
+                    continue;
+
+                if(working[0] == "Description")
+                {
+                    disk.Decription = working[1];
+                }
+                else if (working[0] == "DeviceID")
+                {
+                    disk.DeviceID = working[1];
+                }
+                else if (working[0] == "Size")
+                {
+                    if (working.Count() > 1)
+                    {
+                        disk.Size = Convert.ToDouble(working[1]);
+                        if (disk.Size > 0)
+                        {
+                            disk.Size = disk.Size / 1024 / 1024;
+                            metrics.Add(disk);
+                        }
+                        disk = new DiskMetrics();
+                    }
+                }
+            }
             return metrics;
         }
     }
