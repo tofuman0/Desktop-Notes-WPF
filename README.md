@@ -11,3 +11,13 @@ You are able to reference external files by entering \{\{ref=PATH_TO_FILE\}\} in
 
 > \{\{ref=http://url.tld/feed.php \}\}
 
+## Referencing system details
+
+You are able to reference system details such as computer name, date, time, CPU, Ram and HDDs by entering the below into the desktop text:
+
+\{\{ref=datetime\}\}
+\{\{ref=datetime("dd-MM-yyyy HH:mm:ss")\}\}
+\{\{ref=system("computername")\}\}
+\{\{ref=system("ram")\}\}
+\{\{ref=system("cpu")\}\}
+\{\{ref=system("hdd")\}\}
