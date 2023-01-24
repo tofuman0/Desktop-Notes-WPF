@@ -111,6 +111,8 @@ namespace Desktop_Notes_WPF
 		}
 		private void Exit_Click(object sender, System.EventArgs e)
         {
+			dtNote.autoRefresh = false;
+			dtNote.Close();
 			Current.Shutdown();
 		}
 

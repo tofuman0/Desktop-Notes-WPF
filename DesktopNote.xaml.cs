@@ -45,7 +45,7 @@ namespace Desktop_Notes_WPF
 
         static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
 
-        private bool autoRefresh = false;
+        public bool autoRefresh = false;
         private UInt32 autoRefreshTime = 60;
         private App.JsonConfig storedConfig = null;
 
@@ -300,15 +300,16 @@ namespace Desktop_Notes_WPF
 
         public void RefreshThreadProc()
         {
-            if(autoRefresh == false)
-            {
-                return;
-            }
             RefreshConfig();
-            Thread.Sleep(Convert.ToInt32(autoRefreshTime * 1000));
-            if (autoRefresh == false)
+            UInt32 waitTime = autoRefreshTime;
+            while(waitTime > 0)
             {
-                return;
+                if (autoRefresh == false)
+                {
+                    return;
+                }
+                waitTime -= 1;
+                Thread.Sleep(Convert.ToInt32(1000));
             }
             Thread t = new Thread(new ThreadStart(RefreshThreadProc));
             t.Start();
