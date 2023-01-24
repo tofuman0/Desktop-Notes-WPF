@@ -115,6 +115,56 @@ namespace Desktop_Notes_WPF
                                         Note += "Failed to load data from " + refPath;
                                     }
                                 }
+                                else if (refPath.Substring(0, 8) == "datetime")
+                                {
+                                    refPath = refPath.Replace("\'", "\"");
+                                    if (refPath.Contains("(\""))
+                                    {
+                                        string format = refPath[10..refPath.IndexOf("\"", 10)];
+                                        string datestring = System.DateTime.Now.ToString(format);
+                                        Note += datestring;
+                                    }
+                                    else
+                                    {
+                                        Note += System.DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+                                    }
+                                }
+                                else if (refPath.Substring(0, 6) == "system")
+                                {
+                                    refPath = refPath.Replace("\'", "\"");
+                                    if (refPath.Contains("(\""))
+                                    {
+                                        string attribute = (refPath[8..refPath.IndexOf("\"", 8)]).ToLower();
+                                        string systemstring = null;
+                                        if (attribute == "cpu" || attribute == "processor")
+                                        {
+                                            var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0\");
+                                            var processorName = key.GetValue("ProcessorNameString");
+                                            systemstring = processorName.ToString();
+                                        }
+                                        else if (attribute == "ram" || attribute == "memory")
+                                        {
+                                            var ram = GetWindowsMetrics();
+                                            if (ram.Total >= 1048576)
+                                            {
+                                                systemstring = Math.Round(ram.Total / 1024 /1024, 2) + "TB";
+                                            }
+                                            else if (ram.Total >= 1024)
+                                            {
+                                                systemstring = Math.Round(ram.Total / 1024, 2) + "GB";
+                                            }
+                                            else
+                                            {
+                                                systemstring = (ram.Total) + "MB";
+                                            }
+                                        }
+                                        else if (attribute == "name" || attribute == "computername")
+                                        {
+                                            systemstring = System.Environment.GetEnvironmentVariable("computername");
+                                        }
+                                        Note += systemstring;
+                                    }
+                                }
                                 else if (File.Exists(refPath))
                                 {
                                     Note += File.ReadAllText(refPath);
@@ -250,6 +300,42 @@ namespace Desktop_Notes_WPF
             {
                 Config(storedConfig);
             }
+        }
+
+
+        // https://gunnarpeipman.com/dotnet-core-system-memory/
+        public class MemoryMetrics
+        {
+            public double Total;
+            public double Used;
+            public double Free;
+        }
+
+        private MemoryMetrics GetWindowsMetrics()
+        {
+            var output = "";
+
+            var info = new System.Diagnostics.ProcessStartInfo();
+            info.FileName = "wmic";
+            info.Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value";
+            info.RedirectStandardOutput = true;
+            info.CreateNoWindow = true;
+
+            using (var process = System.Diagnostics.Process.Start(info))
+            {
+                output = process.StandardOutput.ReadToEnd();
+            }
+
+            var lines = output.Trim().Split("\n");
+            var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
+            var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
+
+            var metrics = new MemoryMetrics();
+            metrics.Total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
+            metrics.Free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
+            metrics.Used = metrics.Total - metrics.Free;
+
+            return metrics;
         }
     }
 }
