@@ -26,3 +26,11 @@ You are able to reference system details such as computer name, date, time, CPU,
 > \{\{ref=system("cpu")\}\}
 
 > \{\{ref=system("hdd")\}\}
+
+## Referencing JSON data
+
+You are able to reference JSON data obtained via HTTP(S). Nested values are assessible by adding the property names after the URL. If no properties are provided the RAW JSON data is displayed
+
+> \{\{ref=json("http://weatherdomain.tld/jsondata.json")\}\}
+
+> \{\{ref=json("http://weatherdomain.tld/jsondata.json","current_weather","temperature")\}\}

@@ -20,6 +20,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using System.IO;
 using System.Net;
+using System.Text.Json;
 
 namespace Desktop_Notes_WPF
 {
@@ -108,11 +109,46 @@ namespace Desktop_Notes_WPF
                                     {
                                         var wc = new WebClient();
                                         string webContent = wc.DownloadString(refPath);
+                                        wc.Dispose();
                                         Note += webContent;
                                     }
                                     catch (Exception)
                                     {
                                         Note += "Failed to load data from " + refPath;
+                                    }
+                                }
+                                else if (refPath.Substring(0, 6) == "json(\"")
+                                {
+                                    var tokens = refPath[6..refPath.IndexOf("\")", 6)].Split(',');
+                                    if(tokens.Count() >= 1)
+                                    {
+                                        try
+                                        {
+                                            var wc = new WebClient();
+                                            string webContent = wc.DownloadString(tokens[0].Replace("\"", ""));
+                                            wc.Dispose();
+
+                                            if (tokens.Count() > 1)
+                                            {
+                                                Dictionary<string, object> elements = null;
+                                                string elementString = webContent;
+                                                for (Int32 i = 1; i < tokens.Length; i++)
+                                                {
+                                                    elements = JsonSerializer.Deserialize<Dictionary<string, object>>(elementString);
+                                                    elementString = elements[tokens[i].Replace("\"", "")].ToString();
+                                                }
+                                                
+                                                Note += elementString;
+                                            }
+                                            else if (tokens.Count() == 1)
+                                            {
+                                                Note += webContent;
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Note += "Failed to load json data: " + ex.Message + "\n";
+                                        }
                                     }
                                 }
                                 else if (refPath.Substring(0, 8) == "datetime")
@@ -176,13 +212,15 @@ namespace Desktop_Notes_WPF
                                                     systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
                                                 }
                                             }
-                                            systemstring = systemstring.Trim('\n');
+                                            if(systemstring != null)
+                                                systemstring = systemstring.Trim('\n');
                                         }
                                         else if (attribute == "name" || attribute == "computername")
                                         {
                                             systemstring = System.Environment.GetEnvironmentVariable("computername");
                                         }
-                                        Note += systemstring;
+                                        if(systemstring != null)
+                                            Note += systemstring;
                                     }
                                 }
                                 else if (File.Exists(refPath))
