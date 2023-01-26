@@ -119,23 +119,26 @@ namespace Desktop_Notes_WPF
                                 }
                                 else if (refPath.Substring(0, 6) == "json(\"")
                                 {
-                                    var tokens = refPath[6..refPath.IndexOf("\")", 6)].Split(',');
+                                    refPath = refPath.Replace("\'", "\"");
+                                    var tokens = refPath[6..refPath.IndexOf(")", 6)].Replace("\"","").ToLower().Split(',');
                                     if(tokens.Count() >= 1)
                                     {
                                         try
                                         {
                                             var wc = new WebClient();
-                                            string webContent = wc.DownloadString(tokens[0].Replace("\"", ""));
+                                            string webContent = wc.DownloadString(tokens[0]);
                                             wc.Dispose();
 
                                             if (tokens.Count() > 1)
                                             {
+                                                // Check for properties
                                                 Dictionary<string, object> elements = null;
                                                 string elementString = webContent;
+                                                // If nested it will loop through until it finds the property
                                                 for (Int32 i = 1; i < tokens.Length; i++)
                                                 {
                                                     elements = JsonSerializer.Deserialize<Dictionary<string, object>>(elementString);
-                                                    elementString = elements[tokens[i].Replace("\"", "")].ToString();
+                                                    elementString = elements[tokens[i]].ToString();
                                                 }
                                                 
                                                 Note += elementString;
@@ -170,57 +173,65 @@ namespace Desktop_Notes_WPF
                                     refPath = refPath.Replace("\'", "\"");
                                     if (refPath.Contains("(\""))
                                     {
-                                        string attribute = (refPath[8..refPath.IndexOf("\"", 8)]).ToLower();
-                                        string systemstring = null;
-                                        if (attribute == "cpu" || attribute == "processor")
+                                        var tokens = (refPath[8..refPath.IndexOf(")", 8)]).Replace("\"", "").ToLower().Split(',');
+                                        if (tokens.Length > 0)
                                         {
-                                            var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0\");
-                                            var processorName = key.GetValue("ProcessorNameString");
-                                            systemstring = processorName.ToString();
-                                        }
-                                        else if (attribute == "ram" || attribute == "memory")
-                                        {
-                                            var ram = GetWindowsRamMetrics();
-                                            if (ram.Total >= 1048576)
+                                            string attribute = tokens[0];
+                                            string systemstring = null;
+                                            if (attribute == "cpu" || attribute == "processor")
                                             {
-                                                systemstring = Math.Round(ram.Total / 1024 /1024, 2) + "TB";
+                                                var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0\");
+                                                var processorName = key.GetValue("ProcessorNameString");
+                                                systemstring = processorName.ToString();
                                             }
-                                            else if (ram.Total >= 1024)
+                                            else if (attribute == "ram" || attribute == "memory")
                                             {
-                                                systemstring = Math.Round(ram.Total / 1024, 2) + "GB";
-                                            }
-                                            else
-                                            {
-                                                systemstring = (ram.Total) + "MB";
-                                            }
-                                        }
-                                        else if (attribute == "harddisks" || attribute == "hdd")
-                                        {
-                                            var hdds = GetWindowsDiskMetrics();
-                                            foreach(var hdd in hdds)
-                                            {
-                                                if (hdd.Size >= 1048576)
+                                                var ram = GetWindowsRamMetrics();
+                                                if (ram.Total >= 1048576)
                                                 {
-                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
+                                                    systemstring = Math.Round(ram.Total / 1024 / 1024, 2) + "TB";
                                                 }
-                                                else if (hdd.Size >= 1024)
+                                                else if (ram.Total >= 1024)
                                                 {
-                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                    systemstring = Math.Round(ram.Total / 1024, 2) + "GB";
                                                 }
                                                 else
                                                 {
-                                                    systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
+                                                    systemstring = (ram.Total) + "MB";
                                                 }
                                             }
-                                            if(systemstring != null)
-                                                systemstring = systemstring.Trim('\n');
+                                            else if (attribute == "harddisks" || attribute == "hdd")
+                                            {
+                                                var hdds = GetWindowsDiskMetrics();
+                                                foreach (var hdd in hdds)
+                                                {
+                                                    if(tokens.Length > 1 && tokens.Contains(hdd.DeviceID.Substring(0, 1).ToLower()) == false)
+                                                    {
+                                                        continue;
+                                                    }
+                                                    if (hdd.Size >= 1048576)
+                                                    {
+                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
+                                                    }
+                                                    else if (hdd.Size >= 1024)
+                                                    {
+                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                    }
+                                                    else
+                                                    {
+                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
+                                                    }
+                                                }
+                                                if (systemstring != null)
+                                                    systemstring = systemstring.Trim('\n');
+                                            }
+                                            else if (attribute == "name" || attribute == "computername")
+                                            {
+                                                systemstring = System.Environment.GetEnvironmentVariable("computername");
+                                            }
+                                            if (systemstring != null)
+                                                Note += systemstring;
                                         }
-                                        else if (attribute == "name" || attribute == "computername")
-                                        {
-                                            systemstring = System.Environment.GetEnvironmentVariable("computername");
-                                        }
-                                        if(systemstring != null)
-                                            Note += systemstring;
                                     }
                                 }
                                 else if (File.Exists(refPath))
