@@ -49,15 +49,33 @@ namespace Desktop_Notes_WPF
         public bool autoRefresh = false;
         private UInt32 autoRefreshTime = 60;
         private App.JsonConfig storedConfig = null;
+        private bool running = true;
 
         public DesktopNote()
         {
             InitializeComponent();
+            this.Dispatcher.Invoke(() =>
+            {
+                Thread t = new Thread(new ThreadStart(CheckForMinimize));
+                t.SetApartmentState(ApartmentState.MTA);
+                t.Start();
+            });
+        }
+
+        ~DesktopNote()
+        {
+            Stop();
         }
         static void SendWpfWindowBack(Window window)
         {
             var hWnd = new WindowInteropHelper(window).Handle;
             SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+        }
+
+        public void Stop()
+        {
+            running = false;
+            autoRefresh = false;
         }
 
         private void Window_GotFocus(object sender, RoutedEventArgs e)
@@ -362,6 +380,16 @@ namespace Desktop_Notes_WPF
             }
             Thread t = new Thread(new ThreadStart(RefreshThreadProc));
             t.Start();
+        }
+
+        public void CheckForMinimize()
+        {
+            while (running)
+            {
+                if (WindowState == WindowState.Minimized)
+                    WindowState = WindowState.Normal;
+                Thread.Sleep(Convert.ToInt32(1000));
+            }
         }
 
         public void RefreshConfig()
