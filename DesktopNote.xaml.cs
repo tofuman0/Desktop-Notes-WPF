@@ -41,8 +41,12 @@ namespace Desktop_Notes_WPF
             int cy,
             uint uFlags);
 
+        [DllImport("user32.dll")]
+        static extern IntPtr GetShellWindow();
+
         const UInt32 SWP_NOSIZE = 0x0001;
         const UInt32 SWP_NOMOVE = 0x0002;
+        const UInt32 SWP_SHOWWINDOW = 0x0040;
 
         static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
 
@@ -54,12 +58,6 @@ namespace Desktop_Notes_WPF
         public DesktopNote()
         {
             InitializeComponent();
-            this.Dispatcher.Invoke(() =>
-            {
-                Thread t = new Thread(new ThreadStart(CheckForMinimize));
-                t.SetApartmentState(ApartmentState.MTA);
-                t.Start();
-            });
         }
 
         ~DesktopNote()
@@ -69,7 +67,9 @@ namespace Desktop_Notes_WPF
         static void SendWpfWindowBack(Window window)
         {
             var hWnd = new WindowInteropHelper(window).Handle;
-            SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+            //SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+            IntPtr desktopHwnd = GetShellWindow();
+            SetWindowPos(hWnd, desktopHwnd, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
         }
 
         public void Stop()
@@ -90,6 +90,15 @@ namespace Desktop_Notes_WPF
         private void Window_Activated(object sender, EventArgs e)
         {
             SendToBack();
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Show();
+                WindowState = WindowState.Normal;
+            }
         }
 
         public void SendToBack()
@@ -191,7 +200,7 @@ namespace Desktop_Notes_WPF
                                     refPath = refPath.Replace("\'", "\"");
                                     if (refPath.Contains("(\""))
                                     {
-                                        var tokens = (refPath[8..refPath.IndexOf(")", 8)]).Replace("\"", "").ToLower().Split(',');
+                                        var tokens = (refPath[8..refPath.IndexOf(")", 8)]).Replace("\"", "").Replace(" ", "").ToLower().Split(',');
                                         if (tokens.Length > 0)
                                         {
                                             string attribute = tokens[0];
@@ -380,16 +389,6 @@ namespace Desktop_Notes_WPF
             }
             Thread t = new Thread(new ThreadStart(RefreshThreadProc));
             t.Start();
-        }
-
-        public void CheckForMinimize()
-        {
-            while (running)
-            {
-                if (WindowState == WindowState.Minimized)
-                    WindowState = WindowState.Normal;
-                Thread.Sleep(Convert.ToInt32(1000));
-            }
         }
 
         public void RefreshConfig()

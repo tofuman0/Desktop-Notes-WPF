@@ -8,6 +8,7 @@ using System.Windows;
 using System.Text.Json;
 using System.IO;
 using System.Buffers;
+using System.Threading;
 using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows.Controls;
 
@@ -76,7 +77,20 @@ namespace Desktop_Notes_WPF
 
 			dtNote.Config(config, true);
 			dtNote.Show();
+
+			Thread t = new Thread(new ThreadStart(CheckForDesktopNoteWindow));
+			t.Start();
 		}
+
+		private void CheckForDesktopNoteWindow()
+        {
+			while(dtNote.IsVisible == true)
+            {
+				Thread.Sleep(1000);
+            }
+			if(dtNote != null)
+				dtNote.Stop();
+        }
 
 		private void Settings_Click(object sender, System.EventArgs e)
 		{

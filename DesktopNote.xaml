@@ -6,7 +6,20 @@
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:local="clr-namespace:Desktop_Notes_WPF"
         mc:Ignorable="d"
-        Title="DesktopNote" Height="300" Width="300" WindowStyle="None" AllowsTransparency="True" ResizeMode="NoResize" ShowInTaskbar="False" OpacityMask="Magenta" Background="#00FF00FF" GotFocus="Window_GotFocus" Loaded="Window_Loaded" Activated="Window_Activated">
+        Title="DesktopNote"
+        Height="300"
+        Width="300"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        OpacityMask="Magenta"
+        Background="#00FF00FF"
+        GotFocus="Window_GotFocus"
+        Loaded="Window_Loaded"
+        Activated="Window_Activated"
+        StateChanged="Window_StateChanged"
+        >
     <Grid>
         <TextBlock x:Name="Note_Text" Text="Desktop Note" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="48" Height="300" Width="300"/>
     </Grid>
