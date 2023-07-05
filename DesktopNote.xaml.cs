@@ -147,8 +147,9 @@ namespace Desktop_Notes_WPF
                                 else if (refPath.Substring(0, 6) == "json(\"")
                                 {
                                     refPath = refPath.Replace("\'", "\"");
-                                    var tokens = refPath[6..refPath.IndexOf(")", 6)].Replace("\"","").ToLower().Split(',');
-                                    if(tokens.Count() >= 1)
+                                    //var tokens = refPath[6..refPath.IndexOf(")", 6)].Replace("\"","").ToLower().Split(',');
+                                    var tokens = refPath[6..refPath.IndexOf(")", 6)].ToLower().Split("\",\"");
+                                    if (tokens.Count() >= 1)
                                     {
                                         try
                                         {
@@ -165,7 +166,7 @@ namespace Desktop_Notes_WPF
                                                 for (Int32 i = 1; i < tokens.Length; i++)
                                                 {
                                                     elements = JsonSerializer.Deserialize<Dictionary<string, object>>(elementString);
-                                                    elementString = elements[tokens[i]].ToString();
+                                                    elementString = elements[tokens[i].Replace("\"","")].ToString();
                                                 }
                                                 
                                                 Note += elementString;
