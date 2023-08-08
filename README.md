@@ -39,6 +39,6 @@ You are able to reference JSON data obtained via HTTP(S). Nested values are acce
 
 You can set prefix and suffix for array values that are returned and set whether to newline on elements using elementsuffix= and elementprefix= before the properties and/or newlineseparator=true newlineseparator=false to set whether or not a new line is placed after each element.
 
-For example if the data provider allows you to pull a number of days min or max temperature values you may want to add a celcious suffix
+For example if the data provider allows you to pull a number of days min or max temperature values you may want to add a celsius suffix
 
 > Min Temp: \{\{ref=json("http://weatherdomain.tld/jsondata.json&daily=temperature_2m_min&timezone=auto&forecast_days=2","elementsuffix=°c","newlineseparator=true","daily","temperature_2m_min") \}\}
