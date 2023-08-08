@@ -197,12 +197,12 @@ namespace Desktop_Notes_WPF
                                                     elementString = elementString.Replace("]", "");
                                                     if(arrayNewlineSeparator == false)
                                                     {
-                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + ", ");
+                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + ", " + elementprefix);
                                                         elementString = elementString + elementsuffix;
                                                     }
                                                     else
                                                     {
-                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + "\n");
+                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + "\n" + elementprefix);
                                                         elementString = elementString + elementsuffix;
                                                     }
                                                 }
