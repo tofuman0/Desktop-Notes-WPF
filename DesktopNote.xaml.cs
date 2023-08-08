@@ -162,13 +162,50 @@ namespace Desktop_Notes_WPF
                                                 // Check for properties
                                                 Dictionary<string, object> elements = null;
                                                 string elementString = webContent;
+                                                bool arrayNewlineSeparator = false;
+                                                string elementsuffix = "";
+                                                string elementprefix = "";
                                                 // If nested it will loop through until it finds the property
                                                 for (Int32 i = 1; i < tokens.Length; i++)
                                                 {
+                                                    if(tokens[i].ToLower() == "newlineseparator=true")
+                                                    {
+                                                        arrayNewlineSeparator = true;
+                                                        continue;
+                                                    }
+                                                    else if (tokens[i].ToLower() == "newlineseparator=false")
+                                                    {
+                                                        arrayNewlineSeparator = false;
+                                                        continue;
+                                                    }
+                                                    else if (tokens[i].ToLower().StartsWith("elementsuffix="))
+                                                    {
+                                                        elementsuffix = tokens[i].Substring(14);
+                                                        continue;
+                                                    }
+                                                    else if (tokens[i].ToLower().StartsWith("elementprefix="))
+                                                    {
+                                                        elementprefix = tokens[i].Substring(14);
+                                                        continue;
+                                                    }
                                                     elements = JsonSerializer.Deserialize<Dictionary<string, object>>(elementString);
-                                                    elementString = elements[tokens[i].Replace("\"","")].ToString();
+                                                    elementString = elements[tokens[i].Replace("\"","")].ToString();                                                    
                                                 }
-                                                
+                                                if (elementString.Contains("[") && elementString.Contains("]"))
+                                                {
+                                                    elementString = elementString.Replace("[", "");
+                                                    elementString = elementString.Replace("]", "");
+                                                    if(arrayNewlineSeparator == false)
+                                                    {
+                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + ", ");
+                                                        elementString = elementString + elementsuffix;
+                                                    }
+                                                    else
+                                                    {
+                                                        elementString = elementprefix + elementString.Replace(",", elementsuffix + "\n");
+                                                        elementString = elementString + elementsuffix;
+                                                    }
+                                                }
                                                 Note += elementString;
                                             }
                                             else if (tokens.Count() == 1)
