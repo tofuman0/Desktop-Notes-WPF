@@ -265,26 +265,59 @@ namespace Desktop_Notes_WPF
                                                     systemstring = (ram.Total) + "MB";
                                                 }
                                             }
-                                            else if (attribute == "harddisks" || attribute == "hdd")
+                                            else if (attribute.StartsWith("harddisks") || attribute.StartsWith("hdd"))
                                             {
                                                 var hdds = GetWindowsDiskMetrics();
+                                                bool includeFreeSpace = attribute.EndsWith("_includefreespace");
                                                 foreach (var hdd in hdds)
                                                 {
                                                     if(tokens.Length > 1 && tokens.Contains(hdd.DeviceID.Substring(0, 1).ToLower()) == false)
                                                     {
                                                         continue;
                                                     }
-                                                    if (hdd.Size >= 1048576)
+
+                                                    if (includeFreeSpace)
                                                     {
-                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
-                                                    }
-                                                    else if (hdd.Size >= 1024)
-                                                    {
-                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                        if (hdd.FreeSpace >= 1048576)
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.FreeSpace / 1024 / 1024, 2) + "TB of ";
+                                                        }
+                                                        else if (hdd.Size >= 1024)
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.FreeSpace / 1024, 2) + "GB of ";
+                                                        }
+                                                        else
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.FreeSpace, 2) + "MB of ";
+                                                        }
+
+                                                        if (hdd.Size >= 1048576)
+                                                        {
+                                                            systemstring += Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
+                                                        }
+                                                        else if (hdd.Size >= 1024)
+                                                        {
+                                                            systemstring += Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                        }
+                                                        else
+                                                        {
+                                                            systemstring += Math.Round(hdd.Size, 2) + "MB\n";
+                                                        }
                                                     }
                                                     else
                                                     {
-                                                        systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
+                                                        if (hdd.Size >= 1048576)
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024 / 1024, 2) + "TB\n";
+                                                        }
+                                                        else if (hdd.Size >= 1024)
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size / 1024, 2) + "GB\n";
+                                                        }
+                                                        else
+                                                        {
+                                                            systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
+                                                        }
                                                     }
                                                 }
                                                 if (systemstring != null)
@@ -451,6 +484,7 @@ namespace Desktop_Notes_WPF
             public string DeviceID;
             public string Decription;
             public double Size;
+            public double FreeSpace;
         }
 
         private MemoryMetrics GetWindowsRamMetrics()
@@ -486,7 +520,7 @@ namespace Desktop_Notes_WPF
 
             var info = new System.Diagnostics.ProcessStartInfo();
             info.FileName = "wmic";
-            info.Arguments = "logicaldisk Get Description,DeviceID,Size /Value";
+            info.Arguments = "logicaldisk Get Description,DeviceID,Size,FreeSpace /Value";
             info.RedirectStandardOutput = true;
             info.CreateNoWindow = true;
 
@@ -511,6 +545,17 @@ namespace Desktop_Notes_WPF
                 else if (working[0] == "DeviceID")
                 {
                     disk.DeviceID = working[1];
+                }
+                else if (working[0] == "FreeSpace")
+                {
+                    if (working.Count() > 1)
+                    {
+                        disk.FreeSpace = Convert.ToDouble(working[1]);
+                        if (disk.FreeSpace > 0)
+                        {
+                            disk.FreeSpace = disk.FreeSpace / 1024 / 1024;
+                        }
+                    }
                 }
                 else if (working[0] == "Size")
                 {
