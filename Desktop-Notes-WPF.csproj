@@ -6,7 +6,7 @@
     <RootNamespace>Desktop_Notes_WPF</RootNamespace>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Icons\Desktop Notes.ico</ApplicationIcon>
-    <Version>1.1.1</Version>
+    <Version>1.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
