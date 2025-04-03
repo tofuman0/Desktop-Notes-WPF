@@ -21,6 +21,8 @@ using System.Windows.Forms;
 using System.IO;
 using System.Net;
 using System.Text.Json;
+using System.Management;
+using System.Net.Http;
 
 namespace Desktop_Notes_WPF
 {
@@ -53,8 +55,7 @@ namespace Desktop_Notes_WPF
         public bool autoRefresh = false;
         private UInt32 autoRefreshTime = 60;
         private App.JsonConfig storedConfig = null;
-        private bool running = true;
-
+        
         public DesktopNote()
         {
             InitializeComponent();
@@ -74,7 +75,6 @@ namespace Desktop_Notes_WPF
 
         public void Stop()
         {
-            running = false;
             autoRefresh = false;
         }
 
@@ -110,7 +110,7 @@ namespace Desktop_Notes_WPF
         {
             try
             {
-                this.Dispatcher.Invoke(() =>
+                this.Dispatcher.Invoke(async () =>
                 {
                     storedConfig = config;
                     string Note = "";
@@ -134,9 +134,9 @@ namespace Desktop_Notes_WPF
                                 {
                                     try
                                     {
-                                        var wc = new WebClient();
-                                        string webContent = wc.DownloadString(refPath);
-                                        wc.Dispose();
+                                        var hc = new HttpClient();
+                                        string webContent = await hc.GetStringAsync(refPath);
+                                        hc.Dispose();
                                         Note += webContent;
                                     }
                                     catch (Exception)
@@ -153,9 +153,14 @@ namespace Desktop_Notes_WPF
                                     {
                                         try
                                         {
-                                            var wc = new WebClient();
-                                            string webContent = wc.DownloadString(tokens[0]);
-                                            wc.Dispose();
+                                            var hc = new HttpClient();
+                                            if (tokens.Count() == 1)
+                                            {
+                                                tokens[0] = tokens[0].Replace("\"", "");
+                                            }
+
+                                            string webContent = await hc.GetStringAsync(tokens[0]);
+                                            hc.Dispose();
 
                                             if (tokens.Count() > 1)
                                             {
@@ -489,26 +494,12 @@ namespace Desktop_Notes_WPF
 
         private MemoryMetrics GetWindowsRamMetrics()
         {
-            var output = "";
-
-            var info = new System.Diagnostics.ProcessStartInfo();
-            info.FileName = "wmic";
-            info.Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value";
-            info.RedirectStandardOutput = true;
-            info.CreateNoWindow = true;
-
-            using (var process = System.Diagnostics.Process.Start(info))
-            {
-                output = process.StandardOutput.ReadToEnd();
-            }
-
-            var lines = output.Trim().Replace("\r", "").Split("\n");
-            var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
-            var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
-
+            var wmi = new ManagementObjectSearcher("SELECT FreePhysicalMemory,TotalVisibleMemorySize FROM Win32_OperatingSystem").Get().OfType<ManagementObject>().FirstOrDefault();
+            var freeMemory = wmi["FreePhysicalMemory"].ToString();
+            var totalMemory = wmi["TotalVisibleMemorySize"].ToString();
             var metrics = new MemoryMetrics();
-            metrics.Total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
-            metrics.Free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
+            metrics.Total = Math.Round(double.Parse(totalMemory) / 1024, 0);
+            metrics.Free = Math.Round(double.Parse(freeMemory) / 1024, 0);
             metrics.Used = metrics.Total - metrics.Free;
 
             return metrics;
@@ -516,61 +507,33 @@ namespace Desktop_Notes_WPF
 
         private List<DiskMetrics> GetWindowsDiskMetrics()
         {
-            var output = "";
-
-            var info = new System.Diagnostics.ProcessStartInfo();
-            info.FileName = "wmic";
-            info.Arguments = "logicaldisk Get Description,DeviceID,Size,FreeSpace /Value";
-            info.RedirectStandardOutput = true;
-            info.CreateNoWindow = true;
-
-            using (var process = System.Diagnostics.Process.Start(info))
-            {
-                output = process.StandardOutput.ReadToEnd();
-            }
-
+            var wmi = new ManagementObjectSearcher("SELECT Description,DeviceID,Size,FreeSpace FROM Win32_LogicalDisk").Get();
             var metrics = new List<DiskMetrics>();
-            var disk = new DiskMetrics();
-            var lines = output.Trim().Replace("\r", "").Split("\n");
-            foreach(var line in lines)
+            
+            foreach(var disk in wmi)
             {
-                var working = line.Split("=", StringSplitOptions.RemoveEmptyEntries);
-                if (working.Count() == 0)
-                    continue;
+                var diskmetric = new DiskMetrics();
+                if (disk["Size"] != null)
+                {
+                    diskmetric.Decription = disk["Description"].ToString();
+                    diskmetric.DeviceID = disk["DeviceID"].ToString();
+                    diskmetric.Size = Convert.ToDouble(disk["Size"].ToString());
+                    diskmetric.FreeSpace = Convert.ToDouble(disk["FreeSpace"].ToString());
 
-                if(working[0] == "Description")
-                {
-                    disk.Decription = working[1];
-                }
-                else if (working[0] == "DeviceID")
-                {
-                    disk.DeviceID = working[1];
-                }
-                else if (working[0] == "FreeSpace")
-                {
-                    if (working.Count() > 1)
+                    if(diskmetric.Size > 0)
                     {
-                        disk.FreeSpace = Convert.ToDouble(working[1]);
-                        if (disk.FreeSpace > 0)
-                        {
-                            disk.FreeSpace = disk.FreeSpace / 1024 / 1024;
-                        }
+                        diskmetric.Size = diskmetric.Size / 1024 / 1024;
                     }
-                }
-                else if (working[0] == "Size")
-                {
-                    if (working.Count() > 1)
+
+                    if(diskmetric.FreeSpace > 0)
                     {
-                        disk.Size = Convert.ToDouble(working[1]);
-                        if (disk.Size > 0)
-                        {
-                            disk.Size = disk.Size / 1024 / 1024;
-                            metrics.Add(disk);
-                        }
-                        disk = new DiskMetrics();
+                        diskmetric.FreeSpace = diskmetric.FreeSpace / 1024 / 1024;
                     }
+
+                    metrics.Add(diskmetric);
                 }
             }
+           
             return metrics;
         }
     }
