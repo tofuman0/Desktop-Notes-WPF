@@ -15,7 +15,7 @@ You are able to reference external files by entering \{\{ref=PATH_TO_FILE\}\} in
 
 ## Referencing system details
 
-You are able to reference system details such as computer name, date, time, CPU, Ram and HDDs (include free disk space by adding "_includefreespace" as a suffix) by entering the below into the desktop text:
+You are able to reference system details such as computer name, date, time, IP Address, CPU, Ram and HDDs (include free disk space by adding "_includefreespace" as a suffix) by entering the below into the desktop text:
 
 > \{\{ref=datetime\}\}
 
@@ -32,6 +32,17 @@ You are able to reference system details such as computer name, date, time, CPU,
 > \{\{ref=system("hdd_includefreespace")\}\}
 
 > \{\{ref=system("hdd","c","d")\}\}
+
+> \{\{ref=system("ip")\}\}
+
+> \{\{ref=system("ipv4")\}\}
+
+> \{\{ref=system("ipv6")\}\}
+
+> \{\{ref=system("ipgateway")\}\}
+
+> \{\{ref=system("ipdetail")\}\}
+
 
 ## Referencing JSON data
 
