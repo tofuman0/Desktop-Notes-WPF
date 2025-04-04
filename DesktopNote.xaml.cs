@@ -23,6 +23,7 @@ using System.Net;
 using System.Text.Json;
 using System.Management;
 using System.Net.Http;
+using System.Windows.Forms.VisualStyles;
 
 namespace Desktop_Notes_WPF
 {
@@ -252,7 +253,7 @@ namespace Desktop_Notes_WPF
                                             {
                                                 var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0\");
                                                 var processorName = key.GetValue("ProcessorNameString");
-                                                systemstring = processorName.ToString();
+                                                systemstring = processorName.ToString().Trim();
                                             }
                                             else if (attribute == "ram" || attribute == "memory")
                                             {
@@ -324,6 +325,74 @@ namespace Desktop_Notes_WPF
                                                             systemstring += hdd.DeviceID + " " + Math.Round(hdd.Size, 2) + "MB\n";
                                                         }
                                                     }
+                                                }
+                                                if (systemstring != null)
+                                                    systemstring = systemstring.Trim('\n');
+                                            }
+                                            else if (attribute.Substring(0, 2).ToLower() == "ip")
+                                            {
+                                                var ipdetails = GetIPDetails();
+                                                foreach (var ipdetail in ipdetails)
+                                                {
+                                                    if (attribute.ToLower() == "ipv6")
+                                                    {
+                                                        foreach (var ipv6 in ipdetail.IPv6)
+                                                        {
+                                                            systemstring += ipv6 + "\n";
+                                                        }
+                                                    }
+                                                    else if (attribute.ToLower() == "ipv4" || attribute.ToLower() == "ip")
+                                                    {
+                                                        foreach (var ipv4 in ipdetail.IPv4)
+                                                        {
+                                                            systemstring += ipv4 + "\n";
+                                                        }
+                                                    }
+                                                    else if(attribute.ToLower() == "ipgateway")
+                                                    {
+                                                        foreach (var ipgateway in ipdetail.Gateway)
+                                                        {
+                                                            systemstring += ipgateway + "\n";
+                                                        }
+                                                    }
+                                                    else if (attribute.ToLower() == "ipdetail")
+                                                    {
+                                                        systemstring += ipdetail.Description + "\n";
+                                                        if (ipdetail.IPv4.Count() > 0)
+                                                        {
+                                                            systemstring += "IPv4: ";
+                                                            foreach (var ipv4 in ipdetail.IPv4)
+                                                            {
+                                                                systemstring += ipv4 + ", ";
+                                                            }
+                                                            systemstring = systemstring.TrimEnd(' ');
+                                                            systemstring = systemstring.TrimEnd(',');
+                                                            systemstring += "\n";
+                                                        }
+                                                        if (ipdetail.IPv6.Count() > 0)
+                                                        {
+                                                            systemstring += "IPv6: ";
+                                                            foreach (var ipv6 in ipdetail.IPv6)
+                                                            {
+                                                                systemstring += ipv6 + ", ";
+                                                            }
+                                                            systemstring = systemstring.TrimEnd(' ');
+                                                            systemstring = systemstring.TrimEnd(',');
+                                                            systemstring += "\n";
+                                                        }
+                                                        if (ipdetail.Gateway.Count() > 0)
+                                                        {
+                                                            systemstring += "IP Gateway: ";
+                                                            foreach (var ipgateway in ipdetail.Gateway)
+                                                            {
+                                                                systemstring += ipgateway + ", ";
+                                                            }
+                                                            systemstring = systemstring.TrimEnd(' ');
+                                                            systemstring = systemstring.TrimEnd(',');
+                                                            systemstring += "\n";
+                                                        }
+                                                    }
+                                                    systemstring += "\n";
                                                 }
                                                 if (systemstring != null)
                                                     systemstring = systemstring.Trim('\n');
@@ -492,6 +561,14 @@ namespace Desktop_Notes_WPF
             public double FreeSpace;
         }
 
+        public class IPDetails
+        {
+            public string Description;
+            public List<string> IPv4 = [];
+            public List<string> IPv6 = [];
+            public List<string> Gateway = [];
+        }
+
         private MemoryMetrics GetWindowsRamMetrics()
         {
             var wmi = new ManagementObjectSearcher("SELECT FreePhysicalMemory,TotalVisibleMemorySize FROM Win32_OperatingSystem").Get().OfType<ManagementObject>().FirstOrDefault();
@@ -535,6 +612,42 @@ namespace Desktop_Notes_WPF
             }
            
             return metrics;
+        }
+        
+        private List<IPDetails> GetIPDetails()
+        {
+            var wmi = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration").Get();
+            var ipDetails = new List<IPDetails>();
+
+            foreach(var nic in wmi)
+            {
+                var ipdetail = new IPDetails();
+                if (nic["IPAddress"] != null)
+                {
+                    ipdetail.Description = nic["Description"].ToString();
+                    foreach(var ip in ((String[])nic["IPAddress"]))
+                    {
+                        if (ip.Contains(':'))
+                        {
+                            ipdetail.IPv6.Add(ip);
+                        }
+                        else
+                        {
+                            ipdetail.IPv4.Add(ip);
+                        }
+                    }
+                    if (nic["DefaultIPGateway"] != null)
+                    {
+                        foreach(var gateway in ((String[])nic["DefaultIPGateway"]))
+                        {
+                            ipdetail.Gateway.Add(gateway.ToString());
+                        }
+                    }
+                    ipDetails.Add(ipdetail);
+                }
+            }
+
+            return ipDetails;
         }
     }
 }
