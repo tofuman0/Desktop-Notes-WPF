@@ -57,3 +57,15 @@ You can set prefix and suffix for array values that are returned and set whether
 For example if the data provider allows you to pull a number of days min or max temperature values you may want to add a celsius suffix
 
 > Min Temp: \{\{ref=json("http://weatherdomain.tld/jsondata.json&daily=temperature_2m_min&timezone=auto&forecast_days=2","elementsuffix=°c","newlineseparator=true","daily","temperature_2m_min") \}\}
+
+
+## Referencing WMI data
+
+You are able to reference WMI results using WQL. By default the results will display the keys for each row but you can group the results by using the option "1" or "true".
+
+To set the option add either "1" or "true" after the query separated by a comma.
+
+> \{\{ref=wmi("SELECT name FROM Win32_Service WHERE name LIKE 'a%'")\}\}
+
+> \{\{ref=wmi("SELECT name FROM Win32_Service WHERE name LIKE 'a%'","true")\}\}
+

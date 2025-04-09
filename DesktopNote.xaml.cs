@@ -24,6 +24,7 @@ using System.Text.Json;
 using System.Management;
 using System.Net.Http;
 using System.Windows.Forms.VisualStyles;
+using System.CodeDom.Compiler;
 
 namespace Desktop_Notes_WPF
 {
@@ -129,7 +130,7 @@ namespace Desktop_Notes_WPF
                                 // Add filename length and "{{ref=" and "}}" lengths to offset.
                                 offset = find + length + 2;
 
-                                string refPath = config.Note.Substring(find, length);
+                                string refPath = config.Note.Substring(find, length).ToLower();
 
                                 if (refPath.Substring(0, 4) == "http")
                                 {
@@ -142,13 +143,82 @@ namespace Desktop_Notes_WPF
                                     }
                                     catch (Exception)
                                     {
-                                        Note += "Failed to load data from " + refPath;
+                                        Note += "Failed to load data from " + refPath + "\n";
+                                    }
+                                }
+                                else if (refPath.Substring(0,5) == "wmi(\"")
+                                {
+                                    var query = refPath[5..refPath.IndexOf("\"", 5)];
+                                    var option = (refPath.Split("\",\"").Length > 1) ? refPath.Split("\",\"")[1].Replace("\")","") : null;
+                                    if(query.Contains("select") && query.Contains("from"))
+                                    {
+                                        try
+                                        {
+                                            var wmi = GetWmiResults(query);
+
+                                            if (option == null || option == "0" || option == "false")
+                                            {
+                                                Int32 maxElements = Int32.MaxValue;
+                                                foreach (var results in wmi.Values)
+                                                {
+                                                    if (results.Count < maxElements)
+                                                    {
+                                                        maxElements = results.Count;
+                                                    }
+                                                }
+                                                for(Int32 i = 0; i < maxElements; i++)
+                                                {
+                                                    foreach(var key in wmi.Keys)
+                                                    {
+                                                        Note += key + ": " + wmi[key][i] + "\n";
+                                                    }
+                                                }
+                                            }
+                                            else if (option == "1" || option == "true")
+                                            {
+                                                foreach (var results in wmi)
+                                                {
+                                                    Note += results.Key + ": ";
+                                                    foreach (var value in results.Value)
+                                                    {
+                                                        Note += value + "\n";
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                Note += "Invalid option in WMI query: " + option + "\n";
+                                            }
+                                            /*
+                                            var wmi = new ManagementObjectSearcher(query).Get();
+                                            
+                                            foreach(var result in wmi)
+                                            {
+                                                var variables = result.Properties;
+                                                foreach(var v in variables)
+                                                {
+                                                    if (result[v.Name] != null)
+                                                    {
+                                                        Note += v.Name + ": " + result[v.Name].ToString() + "\n";
+                                                    }
+                                                }
+                                                Note += "\n";
+                                            }
+                                            */
+                                        }
+                                        catch
+                                        {
+                                            Note += "Invalid WMI query: " + query + "\n";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Note += "Invalid WMI query: " + query + "\n";
                                     }
                                 }
                                 else if (refPath.Substring(0, 6) == "json(\"")
                                 {
                                     refPath = refPath.Replace("\'", "\"");
-                                    //var tokens = refPath[6..refPath.IndexOf(")", 6)].Replace("\"","").ToLower().Split(',');
                                     var tokens = refPath[6..refPath.IndexOf(")", 6)].ToLower().Split("\",\"");
                                     if (tokens.Count() >= 1)
                                     {
@@ -174,22 +244,22 @@ namespace Desktop_Notes_WPF
                                                 // If nested it will loop through until it finds the property
                                                 for (Int32 i = 1; i < tokens.Length; i++)
                                                 {
-                                                    if(tokens[i].ToLower() == "newlineseparator=true")
+                                                    if(tokens[i] == "newlineseparator=true")
                                                     {
                                                         arrayNewlineSeparator = true;
                                                         continue;
                                                     }
-                                                    else if (tokens[i].ToLower() == "newlineseparator=false")
+                                                    else if (tokens[i] == "newlineseparator=false")
                                                     {
                                                         arrayNewlineSeparator = false;
                                                         continue;
                                                     }
-                                                    else if (tokens[i].ToLower().StartsWith("elementsuffix="))
+                                                    else if (tokens[i].StartsWith("elementsuffix="))
                                                     {
                                                         elementsuffix = tokens[i].Substring(14);
                                                         continue;
                                                     }
-                                                    else if (tokens[i].ToLower().StartsWith("elementprefix="))
+                                                    else if (tokens[i].StartsWith("elementprefix="))
                                                     {
                                                         elementprefix = tokens[i].Substring(14);
                                                         continue;
@@ -329,33 +399,33 @@ namespace Desktop_Notes_WPF
                                                 if (systemstring != null)
                                                     systemstring = systemstring.Trim('\n');
                                             }
-                                            else if (attribute.Substring(0, 2).ToLower() == "ip")
+                                            else if (attribute.Substring(0, 2) == "ip")
                                             {
                                                 var ipdetails = GetIPDetails();
                                                 foreach (var ipdetail in ipdetails)
                                                 {
-                                                    if (attribute.ToLower() == "ipv6")
+                                                    if (attribute == "ipv6")
                                                     {
                                                         foreach (var ipv6 in ipdetail.IPv6)
                                                         {
                                                             systemstring += ipv6 + "\n";
                                                         }
                                                     }
-                                                    else if (attribute.ToLower() == "ipv4" || attribute.ToLower() == "ip")
+                                                    else if (attribute == "ipv4" || attribute == "ip")
                                                     {
                                                         foreach (var ipv4 in ipdetail.IPv4)
                                                         {
                                                             systemstring += ipv4 + "\n";
                                                         }
                                                     }
-                                                    else if(attribute.ToLower() == "ipgateway")
+                                                    else if(attribute == "ipgateway")
                                                     {
                                                         foreach (var ipgateway in ipdetail.Gateway)
                                                         {
                                                             systemstring += ipgateway + "\n";
                                                         }
                                                     }
-                                                    else if (attribute.ToLower() == "ipdetail")
+                                                    else if (attribute == "ipdetail")
                                                     {
                                                         systemstring += ipdetail.Description + "\n";
                                                         if (ipdetail.IPv4.Count() > 0)
@@ -567,6 +637,29 @@ namespace Desktop_Notes_WPF
             public List<string> IPv4 = [];
             public List<string> IPv6 = [];
             public List<string> Gateway = [];
+        }
+
+        private Dictionary<String, List<String>> GetWmiResults(String query)
+        {
+            var wmi = new ManagementObjectSearcher(query).Get();
+            var results = new Dictionary<String, List<String>>();
+
+            foreach (var result in wmi)
+            {
+                var variables = result.Properties;
+                foreach (var v in variables)
+                {
+                    if (result[v.Name] != null)
+                    {
+                        if (results.ContainsKey(v.Name) == false)
+                        {
+                            results.Add(v.Name, []);
+                        }
+                        results[v.Name].Add(result[v.Name].ToString());
+                    }
+                }
+            }
+            return results;
         }
 
         private MemoryMetrics GetWindowsRamMetrics()
