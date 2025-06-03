@@ -55,6 +55,7 @@ namespace Desktop_Notes_WPF
         static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
 
         public bool autoRefresh = false;
+        public bool configUpdated = false;
         private UInt32 autoRefreshTime = 60;
         private App.JsonConfig storedConfig = null;
         
@@ -574,14 +575,15 @@ namespace Desktop_Notes_WPF
                     {
                         autoRefreshTime = Convert.ToUInt32(config.RefreshTime);
                     }
-                });
 
-                if (firstRun == true && autoRefresh == true)
-                {
-                    firstRun = true;
-                    Thread t = new Thread(new ThreadStart(RefreshThreadProc));
-                    t.Start();
-                }
+                    if (firstRun == true && autoRefresh == true)
+                    {
+                        firstRun = false;
+                        Thread t = new Thread(new ThreadStart(RefreshThreadProc));
+                        t.IsBackground = true;
+                        t.Start();
+                    }
+                });
             }
             catch(Exception ex)
             {
@@ -600,9 +602,15 @@ namespace Desktop_Notes_WPF
                     return;
                 }
                 waitTime -= 1;
+                if(configUpdated == true)
+                {
+                    configUpdated = false;
+                    break;
+                }
                 Thread.Sleep(Convert.ToInt32(1000));
             }
             Thread t = new Thread(new ThreadStart(RefreshThreadProc));
+            t.IsBackground = true;
             t.Start();
         }
 
@@ -614,6 +622,10 @@ namespace Desktop_Notes_WPF
             }
         }
 
+        public void ConfigUpdated()
+        {
+            configUpdated = true;
+        }
 
         // https://gunnarpeipman.com/dotnet-core-system-memory/
         public class MemoryMetrics

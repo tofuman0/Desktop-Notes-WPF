@@ -33,9 +33,11 @@
         </ComboBox>
         <Label Grid.Row="0" x:Name="lblSize" Content="Size:" Margin="10,117,0,32" Padding="0" Width="60" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" />
         <Label Grid.Row="0" x:Name="lblWidth" Content="Width:" Margin="10,137,0,12" Padding="0" Width="38" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" />
-        <TextBox Grid.Row="0" x:Name="tbWidth" Width="65" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="50,135,0,11" Text="0" />
-        <Label Grid.Row="0" x:Name="lblHeight" Content="Height:" Margin="130,137,0,12" Padding="0" Width="40" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" />
-        <TextBox Grid.Row="0" x:Name="tbHeight" Width="65" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="174,135,0,11" Text="0" />
+        <TextBox Grid.Row="0" x:Name="tbWidth" Width="60" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="50,135,0,11" Text="0" />
+        <Label Grid.Row="0" x:Name="lblHeight" Content="Height:" Margin="115,137,0,12" Padding="0" Width="40" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <TextBox Grid.Row="0" x:Name="tbHeight" Width="60" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="157,135,0,11" Text="0" />
+        <Label Grid.Row="0" x:Name="lblAutoRefresh" Content="Refresh time:" Margin="238,117,0,32" Padding="0" Width="80" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <TextBox Grid.Row="0" x:Name="tbRefreshTime" Width="85" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="238,135,0,11" Text="0" />
         <Label Grid.Row="1" Name="lblNote" Content="Note:" Margin="10 0 0 0" Padding="0" Width="40" Height="16" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalAlignment="Top" />
         <TextBox Grid.Row="1" x:Name="DesktopNote" Margin="10 20 10 10" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Text="Desktop Note" />
         <Button Grid.Row="2" x:Name="btnSave" Content="Save" Width="100" Height="32" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalAlignment="Bottom" VerticalContentAlignment="Center" Margin="0,0,120,10" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Click="btnSave_Click"  />

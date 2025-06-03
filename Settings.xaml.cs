@@ -37,6 +37,7 @@ namespace Desktop_Notes_WPF
             cbAlignment.Text = Convert.ToString(config.TextAlign);
             tbWidth.Text = Convert.ToString(config.Width);
             tbHeight.Text = Convert.ToString(config.Height);
+            tbRefreshTime.Text = Convert.ToString(config.RefreshTime);
             DesktopNote.Text = Convert.ToString(config.Note);
         }
 
@@ -59,6 +60,7 @@ namespace Desktop_Notes_WPF
                 UInt32 colour = Convert.ToUInt32(Convert.ToString(config.FontColour), 16) & 0x00FFFFFF;
                 UInt32 alpha = (Convert.ToUInt32((255.0 / 100.0) * Math.Min(100, Math.Max(0, Convert.ToUInt32(tbAlpha.Text)))) & 0xFF) << 24;
                 config.FontColour = Convert.ToString(colour | alpha, 16);
+                config.RefreshTime = Math.Max(1, Convert.ToUInt32(Convert.ToString(tbRefreshTime.Text)));
                 this.DialogResult = true;
                 this.Close();
             }

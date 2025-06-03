@@ -106,6 +106,7 @@ namespace Desktop_Notes_WPF
 						config = settings.config;
 						dtNote.Config(config);
 						WriteConfig(config, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Desktop-Notes.json");
+						dtNote.ConfigUpdated();
 					}
 					settingsOpen = false;
 				}
